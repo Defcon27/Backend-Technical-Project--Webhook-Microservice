@@ -27,7 +27,6 @@ broker.createService({
 
         // update action
         async update(ctx) {
-
             try {
                 const id = ctx.params.id;
                 let urlUpdate = { "targetURL": ctx.params.newTargetURL };
@@ -39,6 +38,20 @@ broker.createService({
             }
             catch (error) {
                 return { "success": false, "error": error.message };
+            }
+        },
+
+        // list action
+        async list(ctx) {
+            try {
+                let webhooksData = await Webhook.find().select({ "targetURL": 1 });
+                if (webhooksData.length > 0) {
+                    return webhooksData;
+                }
+                return "No targetURLs found";
+            }
+            catch (error) {
+                return { "error": error.message };
             }
         }
     }
@@ -72,7 +85,7 @@ router.post('/register', async function (req, res, next) {
     }
 
     let broker_res = await broker.call("webhooks.register", { "targetURL": targetURL })
-    res.send(broker_res);
+    res.json(broker_res);
 
 });
 
@@ -94,7 +107,18 @@ router.put('/update', async function (req, res, next) {
     }
 
     const broker_res = await broker.call("webhooks.update", updateURLData)
-    res.send(broker_res);
+    res.json(broker_res);
+
+});
+
+
+
+
+// Update Route
+router.get('/list', async function (req, res, next) {
+
+    const broker_res = await broker.call("webhooks.list")
+    res.json(broker_res);
 
 });
 
