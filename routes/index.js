@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const Webhook = require('../models/Webhook')
+const Joi = require("joi")
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+
+// Root Route
+router.get('/', function (req, res, next) {
+    res.send("WebHook Microservice Running .............");
 });
+
 
 module.exports = router;

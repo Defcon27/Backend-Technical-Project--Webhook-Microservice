@@ -1,20 +1,47 @@
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
-const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const mongoose = require('mongoose');
 require("dotenv").config();
 
 const indexRouter = require('./routes/index');
-
 const app = express();
+
+
+//Connecting to Mongodb
+const mongodb = async () => {
+    try {
+        const conn = await mongoose.connect(process.env.MONGODB_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            useCreateIndex: true,
+            useFindAndModify: false
+        });
+
+        console.log("MongoDB connected");
+
+    } catch (err) {
+        console.log("MongoDB Error : Failed to connect");
+        console.log(err);
+        process.exit(1);
+    }
+}
+
+mongodb();
+
+
 
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+
+console.log("App running on http://localhost:3000");
+
 
 app.use('/', indexRouter);
+
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
