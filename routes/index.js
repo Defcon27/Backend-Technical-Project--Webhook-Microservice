@@ -18,12 +18,12 @@ broker.createService({
             try {
                 const webhook = new Webhook(ctx.params);
                 await webhook.save();
-                return { "success": true, "ID": webhook._id };
-            }
-            catch (error) {
+                return { "success": true, "targetURL_ID": webhook._id };
+            } catch (error) {
                 return { "success": false, "error": error.message };
             }
         },
+
 
         // update action
         async update(ctx) {
@@ -35,11 +35,11 @@ broker.createService({
                     return { "success": true };
                 }
                 return { "success": false, "error": "id not found" }
-            }
-            catch (error) {
+            } catch (error) {
                 return { "success": false, "error": error.message };
             }
         },
+
 
         // list action
         async list(ctx) {
@@ -49,10 +49,25 @@ broker.createService({
                     return webhooksData;
                 }
                 return "No targetURLs found";
-            }
-            catch (error) {
+            } catch (error) {
                 return { "error": error.message };
             }
+        },
+
+
+        // delete action
+        async delete(ctx) {
+            try {
+                const targetURL_ID = ctx.params.targetURL_ID;
+                let deleteResult = await Webhook.findOneAndDelete({ targetURL_ID });
+                if (deleteResult) {
+                    return { "success": true };
+                }
+                return { "success": false, "error": "id not found" }
+            } catch (error) {
+
+            }
+
         }
     }
 });
@@ -70,7 +85,7 @@ router.get('/', function (req, res, next) {
 
 
 
-// Resgister Route
+// Register TargetURL Route
 router.post('/register', async function (req, res, next) {
 
     const targetURL = req.body.targetURL
@@ -84,14 +99,14 @@ router.post('/register', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    let broker_res = await broker.call("webhooks.register", { "targetURL": targetURL })
+    let broker_res = await broker.call("webhooks.register", { "targetURL": targetURL });
     res.json(broker_res);
 
 });
 
 
 
-// Update Route
+// Update TargetURL Route
 router.put('/update', async function (req, res, next) {
 
     const updateURLData = req.body
@@ -106,7 +121,7 @@ router.put('/update', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    const broker_res = await broker.call("webhooks.update", updateURLData)
+    const broker_res = await broker.call("webhooks.update", updateURLData);
     res.json(broker_res);
 
 });
@@ -114,10 +129,31 @@ router.put('/update', async function (req, res, next) {
 
 
 
-// Update Route
+// List TargetURLs Route
 router.get('/list', async function (req, res, next) {
 
-    const broker_res = await broker.call("webhooks.list")
+    const broker_res = await broker.call("webhooks.list");
+    res.json(broker_res);
+
+});
+
+
+
+// Delete TargetURL Route
+router.delete('/delete', async function (req, res, next) {
+
+    const targetURL_ID = req.body.id;
+
+    // validating data
+    const schema = Joi.object({
+        id: Joi.string().max(1000).required()
+    });
+    const { error } = schema.validate(req.body);
+    if (error) {
+        return res.json({ "success": false, "error": error.details[0].message });
+    }
+
+    const broker_res = await broker.call("webhooks.delete", targetURL_ID);
     res.json(broker_res);
 
 });
