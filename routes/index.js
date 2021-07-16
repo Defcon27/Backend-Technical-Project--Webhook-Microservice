@@ -21,7 +21,24 @@ broker.createService({
                 return { "success": true, "ID": webhook._id };
             }
             catch (error) {
-                return { "success": false, "error": error };
+                return { "success": false, "error": error.message };
+            }
+        },
+
+        // update action
+        async update(ctx) {
+
+            try {
+                const id = ctx.params.id;
+                let urlUpdate = { "targetURL": ctx.params.newTargetURL };
+                let updateResult = await Webhook.findOneAndUpdate({ "_id": id }, urlUpdate);
+                if (updateResult) {
+                    return { "success": true };
+                }
+                return { "success": false, "error": "id not found" }
+            }
+            catch (error) {
+                return { "success": false, "error": error.message };
             }
         }
     }
@@ -37,22 +54,46 @@ router.get('/', function (req, res, next) {
     res.send("WebHook Microservice Running .............");
 });
 
+
+
+
 // Resgister Route
-router.get('/register', async function (req, res, next) {
+router.post('/register', async function (req, res, next) {
 
-    let targetURL = req.query.targetURL
-    console.log(targetURL);
+    const targetURL = req.body.targetURL
 
-    // validating query params
+    // validating data
     const schema = Joi.object({
-        targetURL: Joi.string().max(10000).required(),
+        targetURL: Joi.string().max(10000).required()
     });
-    const { error } = schema.validate(req.query);
+    let { error } = schema.validate(req.body);
     if (error) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    const broker_res = await broker.call("webhooks.register", { "targetURL": targetURL })
+    let broker_res = await broker.call("webhooks.register", { "targetURL": targetURL })
+    res.send(broker_res);
+
+});
+
+
+
+// Update Route
+router.put('/update', async function (req, res, next) {
+
+    const updateURLData = req.body
+
+    // validating update data
+    const schema = Joi.object({
+        id: Joi.string().max(1000).required(),
+        newTargetURL: Joi.string().max(10000).required()
+    });
+    const { error } = schema.validate(updateURLData);
+    if (error) {
+        return res.json({ "success": false, "error": error.details[0].message });
+    }
+
+    const broker_res = await broker.call("webhooks.update", updateURLData)
     res.send(broker_res);
 
 });
