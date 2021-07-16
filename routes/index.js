@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Webhook = require('../models/Webhook')
 const Joi = require("joi")
+const axios = require("axios");
 const { ServiceBroker } = require("moleculer");
 
 
@@ -68,6 +69,53 @@ broker.createService({
 
             }
 
+        },
+
+
+        // trigger action
+        async trigger(ctx) {
+
+            let ipAddress = ctx.params.ipAddress;
+            let targetURLs = await Webhook.find().select({ "_id": 0, "targetURL": 1 });
+            const triggerLogs = []
+
+            for (url in targetURLs) {
+                const { targetURL } = targetURLs[url];
+
+                let httpPostResponse = await this.actions.sendHttpPost({ "ipAddress": ipAddress, "url": targetURL }, {
+                    timeout: 2000,
+                    retries: 3,
+                    fallbackResponse(ctx, err) {
+                        return 408;
+                    }
+                });
+
+                triggerLogs.push({ "targetURL": targetURL, "Response": httpPostResponse })
+                //console.log(targetURL + " " + httpPostResponse);
+            }
+            return triggerLogs;
+        },
+
+
+
+        // HTTP POST Request action
+        async sendHttpPost(ctx) {
+
+            try {
+                console.log("Triggering  " + ctx.params.url)
+                let HttpPostResponse = await axios({
+                    method: "POST",
+                    url: ctx.params.url,
+                    data: {
+                        "ipAddress": ctx.params.ipAddress,
+                        "timestamp": Date.now()
+                    }
+                });
+                return HttpPostResponse.status
+            } catch (error) {
+                return error.response.status;
+            }
+
         }
     }
 });
@@ -99,8 +147,8 @@ router.post('/register', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    let broker_res = await broker.call("webhooks.register", { "targetURL": targetURL });
-    res.json(broker_res);
+    let brokerResponse = await broker.call("webhooks.register", { "targetURL": targetURL });
+    res.json(brokerResponse);
 
 });
 
@@ -121,8 +169,8 @@ router.put('/update', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    const broker_res = await broker.call("webhooks.update", updateURLData);
-    res.json(broker_res);
+    const brokerResponse = await broker.call("webhooks.update", updateURLData);
+    res.json(brokerResponse);
 
 });
 
@@ -132,8 +180,8 @@ router.put('/update', async function (req, res, next) {
 // List TargetURLs Route
 router.get('/list', async function (req, res, next) {
 
-    const broker_res = await broker.call("webhooks.list");
-    res.json(broker_res);
+    const brokerResponse = await broker.call("webhooks.list");
+    res.json(brokerResponse);
 
 });
 
@@ -153,9 +201,22 @@ router.delete('/delete', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    const broker_res = await broker.call("webhooks.delete", targetURL_ID);
-    res.json(broker_res);
+    const brokerResponse = await broker.call("webhooks.delete", targetURL_ID);
+    res.json(brokerResponse);
 
+});
+
+
+
+
+
+//------------------------Webhooks 
+// IP route
+router.get('/ip', async function (req, res, next) {
+
+    const ipAddressData = req.query;
+    const brokerResponse = await broker.call("webhooks.trigger", ipAddressData);
+    res.send(brokerResponse);
 });
 
 
