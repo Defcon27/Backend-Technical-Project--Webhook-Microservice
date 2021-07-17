@@ -1,17 +1,11 @@
 const Webhook = require('../models/Webhook')
+const _ = require('lodash');
 const axios = require("axios");
 
 module.exports = {
     name: "webhooks",
 
     actions: {
-
-        sendHttpPost: {
-            bulkhead: {
-                enabled: true,
-                concurrency: 10,
-            }
-        },
 
         // register action
         async register(ctx) {
@@ -75,44 +69,58 @@ module.exports = {
         async trigger(ctx) {
 
             let ipAddress = ctx.params.ipAddress;
-            let targetURLs = await Webhook.find().select({ "_id": 0, "targetURL": 1 });
+            let targetURLData = await Webhook.find().select({ "_id": 0, "targetURL": 1 });
+            let targetURLs = targetURLData.map(x => x.targetURL);
             const triggerLogs = []
 
-            for (url in targetURLs) {
-                const { targetURL } = targetURLs[url];
+            let parallelRequests = 10
+            let targetURLBatches = _.chunk(targetURLs, parallelRequests);
 
-                let httpPostResponse = await this.actions.sendHttpPost({ "ipAddress": ipAddress, "url": targetURL }, {
-                    timeout: 2000,
-                    retries: 5,
-                    fallbackResponse(ctx, err) { return 408 }
-                });
+            for (batch in targetURLBatches) {
+                currentBatch = targetURLBatches[batch];
 
-                triggerLogs.push({ "targetURL": targetURL, "Response": httpPostResponse })
-                console.log(targetURL + " " + httpPostResponse);
+                var promisesArray = [];
+                for (url in currentBatch) {
+                    const targetURL = currentBatch[url];
+                    promisesArray.push(this.sendHttpPost(targetURL, ipAddress));
+                }
+                const httpPostResponses = await Promise.all(promisesArray)
+                console.log(httpPostResponses);
+
+                // Logging response data
+                for (let idx = 0; idx < currentBatch.length; idx++) {
+                    triggerLogs.push({ "targetURL": currentBatch[idx], "Response": httpPostResponses[idx] })
+                }
             }
+            console.log(triggerLogs);
             return triggerLogs;
-        },
-
-
-
-        // HTTP POST Request action
-        async sendHttpPost(ctx) {
-
-            try {
-                console.log("Triggering  " + ctx.params.url)
-                let HttpPostResponse = await axios({
-                    method: "POST",
-                    url: ctx.params.url,
-                    data: {
-                        "ipAddress": ctx.params.ipAddress,
-                        "timestamp": Date.now()
-                    }
-                });
-                return HttpPostResponse.status
-            } catch (error) {
-                return error.response.status;
-            }
-
         }
+    },
+
+
+    // 
+    methods: {
+
+        // Method to send HTTP POST Request
+        // Params : String ipAddress
+
+        sendHttpPost(targetURL, ipAddress) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: 'post',
+                    url: targetURL,
+                    data: { "ipAddress": ipAddress, "timestamp": Date.now() },
+                    timeout: 2000
+                }).then(response => {
+                    resolve(response.status)
+                }).catch(function (error) {
+                    if (error.response) {
+                        resolve(error.response.status);
+                    }
+                    resolve(408);
+                })
+            });
+        }
+
     }
 };
