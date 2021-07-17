@@ -1,5 +1,13 @@
 # Dyte-Technical-Project-Backend---Webhook-Microservice
-This repository contains the code for Dyte Backend challenge - Webhook microservice
+
+This repository contains the code for Dyte Backend challenge - Webhook microservice. It is a webhook microservice where the admin can CREATE, READ, UPDATE, DELETE webhooks. This service also has a trigger functionality which send an `IPAddress` and `UNIX Timestamp` to the targets.
+<br><br>
+
+
+
+## POSTMAN Documentation
+[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-orange?style=for-the-badge&logo=postman)](https://documenter.getpostman.com/view/15724687/TzmCgYUu) 
+
 
 
 
@@ -120,6 +128,16 @@ This repository contains the code for Dyte Backend challenge - Webhook microserv
   }
 ]
 ```
+<br>
+###### Example Data Received on Target
+```json
+{
+  "ipAddress": "192.168.0.1",
+  "timestamp": 1626529781325
+}
+```
+
+
 <br>
 <br>
 
