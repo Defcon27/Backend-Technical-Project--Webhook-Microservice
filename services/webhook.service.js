@@ -7,7 +7,13 @@ module.exports = {
 
     actions: {
 
-        // register action
+        /**
+        * Register Action - Creates Webhook object and 
+        * saves to the database
+        * 
+        * @param    {String} targetURL  newtargetURL to replace old one
+        * @return   {json}                 success or error message
+        */
         async register(ctx) {
             try {
                 const webhook = new Webhook(ctx.params);
@@ -19,7 +25,14 @@ module.exports = {
         },
 
 
-        // update action
+        /**
+        * Update Action - Retrives existing targetURL with 
+        * given ID and updates with newTargetURL in database
+        * 
+        * @param    {String} id            ID of targetURL to be updated
+        * @param    {String} newTargetURL  newtargetURL to replace old one
+        * @return   {json}                 success or error message
+        */
         async update(ctx) {
             try {
                 const id = ctx.params.id;
@@ -35,7 +48,11 @@ module.exports = {
         },
 
 
-        // list action
+        /**
+        * List Action - Retrives all the webhook data from the database
+        * 
+        * @return   {Array} Array of webhook data 
+        */
         async list(ctx) {
             try {
                 let webhooksData = await Webhook.find().select({ "targetURL": 1 });
@@ -49,7 +66,14 @@ module.exports = {
         },
 
 
-        // delete action
+
+        /**
+        * Delete Action - Retrives existing targetURL with 
+        * given ID and deletes it from database
+        * 
+        * @param    {String} id            ID of targetURL to be updated
+        * @return   {json}                 success or error message
+        */
         async delete(ctx) {
             try {
                 const targetURL_ID = ctx.params.id;
@@ -67,7 +91,21 @@ module.exports = {
         },
 
 
-        // trigger action
+
+        /**
+        * Trigger Action - Retrives all the existing targetURLs 
+        * from database and send POST request with IP address
+        * and UNIX timestamp
+        * 
+        * Sends requests to batchwise with 10 targetURLs in parallel
+        * modify parallelRequests to change default batch size
+        * 
+        * Incase of non 200 response , retries for 5 times
+        * modify maxRetries to change default retries
+        * 
+        * @param    {String} ipAddess      ID of targetURL to be updated
+        * @return   {Array}                 Array of Target Responses with status
+        */
         async trigger(ctx) {
 
             let ipAddress = ctx.params.ipAddress;
@@ -118,8 +156,13 @@ module.exports = {
     // 
     methods: {
 
-        // Method to send HTTP POST Request
-        // Params : String ipAddress
+        /**
+        * Method to send HTTP Post request 
+        * 
+        * @param    {String}    targetURL     targetURL to sent request
+        * @param    {ipAddress} IPAddress     ipAddress to be sent in postrequest
+        * @return   {promise}                 promise that is fullfilled in paraller later
+        */
 
         sendHttpPost(targetURL, ipAddress) {
             return new Promise((resolve, reject) => {
@@ -140,6 +183,13 @@ module.exports = {
         },
 
 
+        /**
+       * Method to send Async HTTP Post request 
+       * 
+       * @param    {String}    targetURL     targetURL to sent request
+       * @param    {ipAddress} IPAddress     ipAddress to be sent in postrequest
+       * @return   {json}                    json data with status code
+       */
         async retryHttpPost(targetURL, ipAddress) {
             try {
                 console.log("Retrying .... " + targetURL);
