@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Joi = require("joi")
 const { ServiceBroker } = require("moleculer");
-const webhookService = require('./webhook.service');
+const webhookService = require('../services/webhook.service');
 
 
 // Defining Molecular Services
