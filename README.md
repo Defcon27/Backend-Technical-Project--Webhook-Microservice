@@ -120,4 +120,17 @@ This repository contains the code for Dyte Backend challenge - Webhook microserv
   }
 ]
 ```
+<br>
+<br>
+
+
+
+
+
+## Installation
+ - Clone the repository using `git clone https://github.com/Defcon27/Dyte-Technical-Project-Backend---Webhook-Microservice.git`
+ - Install dependencies using `npm install`
+ - Create .env file and add `MONGODB_URL=mongodb+srv://....Your MongoDB Databse URL`
+ - Start server using `npm start`
+ - Server starts running at `http://localhost:3000` in local environment
 
