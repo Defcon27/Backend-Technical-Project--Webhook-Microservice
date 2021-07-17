@@ -52,14 +52,16 @@ module.exports = {
         // delete action
         async delete(ctx) {
             try {
-                const targetURL_ID = ctx.params.targetURL_ID;
-                let deleteResult = await Webhook.findOneAndDelete({ targetURL_ID });
+                const targetURL_ID = ctx.params.id;
+                console.log(targetURL_ID);
+                let deleteResult = await Webhook.findOneAndDelete({ "_id": targetURL_ID });
+                console.log(deleteResult);
                 if (deleteResult) {
                     return { "success": true };
                 }
                 return { "success": false, "error": "id not found" }
             } catch (error) {
-
+                return { "error": error.message };
             }
 
         },
@@ -73,10 +75,12 @@ module.exports = {
             let targetURLs = targetURLData.map(x => x.targetURL);
             const triggerLogs = []
 
+            // Batch parallel processing with max parallel requests upto 10
             let parallelRequests = 10
             let targetURLBatches = _.chunk(targetURLs, parallelRequests);
-
             for (batch in targetURLBatches) {
+
+                // Triggering targetURLs in each batch                
                 currentBatch = targetURLBatches[batch];
 
                 var promisesArray = [];
@@ -86,6 +90,19 @@ module.exports = {
                 }
                 const httpPostResponses = await Promise.all(promisesArray)
                 console.log(httpPostResponses);
+
+                // Retrying failed requests upto maxRetries
+                let maxRetries = 5;
+                for (let idx = 0; idx < currentBatch.length; idx++) {
+                    if (httpPostResponses[idx] != 200) {
+                        let retries = maxRetries;
+                        while ((retries > 0) && (httpPostResponses[idx] != 200)) {
+                            httpPostResponses[idx] = await this.retryHttpPost(currentBatch[idx], ipAddress);
+                            retries--;
+                        }
+
+                    }
+                }
 
                 // Logging response data
                 for (let idx = 0; idx < currentBatch.length; idx++) {
@@ -120,7 +137,26 @@ module.exports = {
                     resolve(408);
                 })
             });
-        }
+        },
 
+
+        async retryHttpPost(targetURL, ipAddress) {
+            try {
+                console.log("Retrying .... " + targetURL);
+                let HttpPostResponse = await axios({
+                    method: "POST",
+                    url: targetURL,
+                    data: { "ipAddress": ipAddress, "timestamp": Date.now(), },
+                    timeout: 2000
+                });
+                return HttpPostResponse.status
+
+            } catch (error) {
+                if (error.response) {
+                    return error.response.status;
+                }
+                return 408;
+            }
+        }
     }
 };

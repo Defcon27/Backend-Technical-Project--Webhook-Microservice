@@ -84,7 +84,7 @@ router.get('/list', async function (req, res, next) {
 // Delete TargetURL Route
 router.delete('/delete', async function (req, res, next) {
 
-    const targetURL_ID = req.body.id;
+    const targetURLData = req.body;
 
     // validating data
     const schema = Joi.object({
@@ -95,7 +95,7 @@ router.delete('/delete', async function (req, res, next) {
         return res.json({ "success": false, "error": error.details[0].message });
     }
 
-    const brokerResponse = await broker.call("webhooks.delete", targetURL_ID);
+    const brokerResponse = await broker.call("webhooks.delete", targetURLData);
     res.json(brokerResponse);
 
 });
