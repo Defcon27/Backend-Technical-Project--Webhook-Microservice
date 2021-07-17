@@ -6,11 +6,7 @@ const webhookService = require('../services/webhook.service');
 
 
 // Defining Molecular Services
-const broker = new ServiceBroker({
-    retryPolicy: {
-        enabled: true
-    }
-});
+const broker = new ServiceBroker();
 
 broker.createService(webhookService);
 
@@ -27,7 +23,13 @@ router.get('/', function (req, res, next) {
 
 
 
-// Register TargetURL Route
+/**
+* Register TargetURL Route - POST Request that calls
+the actions.register to register a new targetURL
+
+* @param    {String} targetURL  newtargetURL to replace old one
+* @return   {json}              success or error message with unique targetURL ID
+*/
 router.post('/register', async function (req, res, next) {
 
     const targetURL = req.body.targetURL
@@ -48,7 +50,14 @@ router.post('/register', async function (req, res, next) {
 
 
 
-// Update TargetURL Route
+/**
+* Update TargetURL Route - PUT Request that calls
+the actions.update to update the targetURLs
+
+* @param    {String} id            ID of targetURL to be updated
+* @param    {String} newTargetURL  newtargetURL to replace old one
+* @return   {json}                 success or error message
+*/
 router.put('/update', async function (req, res, next) {
 
     const updateURLData = req.body
@@ -69,9 +78,12 @@ router.put('/update', async function (req, res, next) {
 });
 
 
+/**
+* List TargetURLs Route - GET Request that calls
+the actions.list retrive the targetURLs
 
-
-// List TargetURLs Route
+* @return   {array}   Array of webhook data 
+*/
 router.get('/list', async function (req, res, next) {
 
     const brokerResponse = await broker.call("webhooks.list");
@@ -81,7 +93,13 @@ router.get('/list', async function (req, res, next) {
 
 
 
-// Delete TargetURL Route
+/**
+* Delete TargetURL Route - DEL Request that calls
+the actions.delete to delete existing targetURL
+
+* @param    {String} id  ID of targetURL to be delted
+* @return   {json}       success or error message
+*/
 router.delete('/delete', async function (req, res, next) {
 
     const targetURLData = req.body;
@@ -104,11 +122,27 @@ router.delete('/delete', async function (req, res, next) {
 
 
 
-//------------------------Webhooks 
-// IP route
+
+/**
+* IP Route - GET Request that calls the actions.trigger
+* to send post requests to target URLs
+
+* @param    {String} ipAddress  IP Address 
+* @return   {Array}             Array of Target Responses
+*/
 router.get('/ip', async function (req, res, next) {
 
     const ipAddressData = req.query;
+
+    // validating data
+    const schema = Joi.object({
+        ipAddress: Joi.string().max(1000).required()
+    });
+    const { error } = schema.validate(ipAddressData);
+    if (error) {
+        return res.json({ "success": false, "error": error.details[0].message });
+    }
+
     const brokerResponse = await broker.call("webhooks.trigger", ipAddressData);
     res.send(brokerResponse);
 });
