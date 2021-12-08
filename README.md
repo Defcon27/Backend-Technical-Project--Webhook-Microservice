@@ -1,6 +1,6 @@
-# Dyte-Technical-Project-Backend---Webhook-Microservice
+# Technical-Project-Backend---Webhook-Microservice
 
-This repository contains the code for Dyte Backend challenge - Webhook microservice. It is a webhook microservice where the admin can CREATE, READ, UPDATE, DELETE webhooks. This service also has a trigger functionality which send an `IPAddress` and `UNIX Timestamp` to the targets.
+This repository contains the code for Webhook microservice that demostates my work on Backend Technologies. It is a webhook microservice where the admin can CREATE, READ, UPDATE, DELETE webhooks. This service also has a trigger functionality which send an `IPAddress` and `UNIX Timestamp` to the targets.
 <br><br>
 
 
@@ -10,7 +10,7 @@ This repository contains the code for Dyte Backend challenge - Webhook microserv
 
 
 
-## Hosted Link <a href="https://dyte-webhook-service.herokuapp.com/">Here</a>
+<!-- ## Hosted Link <a href="https://webhook-service.herokuapp.com/">Here</a> -->
 
 
 ## API Reference
@@ -149,7 +149,7 @@ This repository contains the code for Dyte Backend challenge - Webhook microserv
 
 
 ## Installation
- - Clone the repository using `git clone https://github.com/Defcon27/Dyte-Technical-Project-Backend---Webhook-Microservice.git`
+ - Clone the repository using `git clone https://github.com/Defcon27/Technical-Project-Backend---Webhook-Microservice.git`
  - Install dependencies using `npm install`
  - Create .env file and add `MONGODB_URL=mongodb+srv://....Your MongoDB Databse URL`
  - Start server using `npm start`
